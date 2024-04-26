@@ -6,15 +6,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        Logo(),
-        Spacer(flex: 1),
-        ServicesSection(),
-        Spacer(flex: 3),
-        OrderButton(),
-        SizedBox(height: 30),
-      ],
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.red),
+      body: const Column(
+        children: [
+          Logo(),
+          Spacer(flex: 1),
+          ServicesSection(),
+          Spacer(flex: 3),
+          OrderButton(),
+          SizedBox(height: 30),
+        ],
+      ),
     );
   }
 }

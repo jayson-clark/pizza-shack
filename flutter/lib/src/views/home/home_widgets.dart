@@ -52,8 +52,8 @@ class ServicesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<StoreNotifier>(
-      builder: (_, settings, __) => FutureBuilder(
-        future: settings.ready,
+      builder: (_, store, __) => FutureBuilder(
+        future: store.ready,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator(color: Colors.red);
@@ -62,12 +62,12 @@ class ServicesSection extends StatelessWidget {
               style: const TextStyle(fontSize: 20),
               child: Column(
                 children: [
-                  OpenCloseRow(isOpen: settings.isOpen),
+                  OpenCloseRow(isOpen: store.isOpen),
                   Text(
-                    'Mobile Orders: ${settings.isAcceptingOrders ? 'Available' : 'Unavailable'}',
+                    'Mobile Orders: ${store.isAcceptingOrders ? 'Available' : 'Unavailable'}',
                   ),
                   Text(
-                    'Delivery: ${settings.isDelivering ? 'Available' : 'Unavailable'}',
+                    'Delivery: ${store.isDelivering ? 'Available' : 'Unavailable'}',
                   ),
                 ],
               ),
