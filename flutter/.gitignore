@@ -1,4 +1,10 @@
 #
+# Firebase
+#
+firebase_options.dart
+google-services.json
+
+#
 # Flutter defaults
 #
 

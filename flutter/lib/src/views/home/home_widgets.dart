@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:pizza_shack/src/services/firestore/store.dart';
 import 'package:pizza_shack/src/views/menu/menu_page.dart';
+import 'package:provider/provider.dart';
 
 class Logo extends StatelessWidget {
   const Logo({super.key});
@@ -8,10 +9,8 @@ class Logo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.only(left: 10, right: 10, top: 50, bottom: 10),
-      child: Image(
-        image: AssetImage('assets/images/logo_text.png'),
-      ),
+      padding: EdgeInsets.symmetric(vertical: 50, horizontal: 10),
+      child: Image(image: AssetImage('assets/images/logo_text.png')),
     );
   }
 }
@@ -52,31 +51,53 @@ class ServicesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle.merge(
-      style: const TextStyle(fontSize: 20),
-      child: const Column(
-        children: [
-          OpenCloseRow(),
-          Text('Mobile Orders: Available'),
-          Text('Delivery: Available'),
-        ],
+    return Consumer<StoreNotifier>(
+      builder: (_, settings, __) => FutureBuilder(
+        future: settings.ready,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator(color: Colors.red);
+          } else {
+            return DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 20),
+              child: Column(
+                children: [
+                  OpenCloseRow(isOpen: settings.isOpen),
+                  Text(
+                    'Mobile Orders: ${settings.isAcceptingOrders ? 'Available' : 'Unavailable'}',
+                  ),
+                  Text(
+                    'Delivery: ${settings.isDelivering ? 'Available' : 'Unavailable'}',
+                  ),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
 }
 
 class OpenCloseRow extends StatelessWidget {
-  const OpenCloseRow({super.key});
+  final bool isOpen;
+
+  const OpenCloseRow({super.key, required this.isOpen});
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        Spacer(),
-        Text('We are currently ',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        Text('OPEN', style: TextStyle(color: Colors.green)),
-        Spacer(),
+        const Spacer(),
+        const Text(
+          'We are currently ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        Text(
+          isOpen ? 'OPEN' : 'CLOSED',
+          style: TextStyle(color: isOpen ? Colors.green : Colors.red),
+        ),
+        const Spacer(),
       ],
     );
   }
