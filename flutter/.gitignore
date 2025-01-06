@@ -1,13 +1,3 @@
-#
-# Firebase
-#
-firebase_options.dart
-google-services.json
-
-#
-# Flutter defaults
-#
-
 # Miscellaneous
 *.class
 *.log
@@ -15,9 +5,11 @@ google-services.json
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -26,7 +18,10 @@ migrate_working_dir/
 *.iws
 .idea/
 
-.vscode/
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
