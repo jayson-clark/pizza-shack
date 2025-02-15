@@ -26,6 +26,12 @@ export default function HomeScreen() {
                     View Bag
                 </Link>
             </TouchableOpacity>
+            {/* New button for Menu Editor */}
+            <TouchableOpacity style={styles.editorButton}>
+                <Link href="/menu-editor" style={styles.editorButtonText}>
+                    Menu Editor
+                </Link>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -95,8 +101,28 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         width: '90%',
         alignItems: 'center',
+        marginBottom: 10,
     },
     bagButtonText: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: '600',
+        textDecorationLine: 'none',
+    },
+    editorButton: {
+        backgroundColor: '#007bff',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        width: '90%',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    editorButtonText: {
         color: '#fff',
         fontSize: 20,
         fontWeight: '600',
