@@ -4,12 +4,24 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-export default function BackButtonHeader() {
+interface BackButtonHeaderProps {
+    to?: string;
+}
+
+export default function BackButtonHeader({ to }: BackButtonHeaderProps) {
     const router = useRouter();
+
+    const handlePress = () => {
+        if (to) {
+            router.push(to);
+        } else {
+            router.back();
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <TouchableOpacity onPress={handlePress} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
         </View>

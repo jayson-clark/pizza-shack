@@ -4,12 +4,12 @@ import { View, FlatList, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 import Card from '../components/Card';
 import { categories } from '../../models/menuData';
-import BackButtonHeader from '../components/BackButtonHeader';
+import BackButtonHeader from '../../../../core/components/BackButtonHeader';
 
 export default function MenuScreen() {
     return (
         <View style={styles.container}>
-            <BackButtonHeader />
+            <BackButtonHeader to='/' />
             <FlatList
                 data={categories}
                 keyExtractor={(item) => item.id}

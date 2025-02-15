@@ -1,11 +1,12 @@
 // pizza-shack/react/features/menu/presentation/screens/ItemConfigScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, Image, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { categories, MenuItem, ConfigSection, ConfigOption } from '../../models/menuData';
-import BackButtonHeader from '../components/BackButtonHeader';
-import Counter from '../components/Counter';
+import BackButtonHeader from '../../../../core/components/BackButtonHeader';
+import Counter from '../../../../core/components/Counter';
 import Checkbox from 'expo-checkbox';
+import { useShoppingBag } from '../../../../core/context/ShoppingBagContext';
 
 interface ConfigState {
     // For each section, we store a mapping from option id to either:
@@ -18,6 +19,8 @@ interface ConfigState {
 
 export default function ItemConfigScreen() {
     const { itemId } = useLocalSearchParams<{ itemId: string }>();
+    const router = useRouter();
+    const { addItem } = useShoppingBag();
 
     // Flatten all items from all categories
     const allItems: MenuItem[] = categories.flatMap((cat) => cat.items);
@@ -51,31 +54,35 @@ export default function ItemConfigScreen() {
         );
     }
 
-    // Calculate the total price based on the selections and quantity
-    const calculateTotalPrice = () => {
-        let singlePrice = item.basePrice;
+    // Calculate the single item price based on the selections
+    const calculateSinglePrice = () => {
+        let price = item.basePrice;
         if (item.configSections) {
             item.configSections.forEach((section) => {
                 const sectionState = configState[section.id];
                 if (sectionState) {
                     if (section.pricingMode === 'flat' && section.flatPrice) {
-                        // Count how many options are selected
                         const selectedCount = Object.values(sectionState).filter(
                             (val) => val === true
                         ).length;
-                        singlePrice += selectedCount * section.flatPrice;
+                        price += selectedCount * section.flatPrice;
                     } else if (section.pricingMode === 'individual') {
-                        // Sum the counters multiplied by each option's price
                         section.options.forEach((option) => {
                             const count = sectionState[option.id] as number;
                             if (option.price) {
-                                singlePrice += count * option.price;
+                                price += count * option.price;
                             }
                         });
                     }
                 }
             });
         }
+        return price;
+    };
+
+    // Calculate total price based on quantity
+    const calculateTotalPrice = () => {
+        const singlePrice = calculateSinglePrice();
         return (quantity * singlePrice).toFixed(2);
     };
 
@@ -88,7 +95,6 @@ export default function ItemConfigScreen() {
         setConfigState((prev) => {
             const sectionState = prev[section.id] ? { ...prev[section.id] } : {};
 
-            // If maxSelections is defined, count current selections excluding the one being toggled off.
             if (section.maxSelections && newValue === true) {
                 const currentSelections = Object.entries(sectionState).filter(
                     ([key, val]) => val === true && key !== option.id
@@ -102,7 +108,6 @@ export default function ItemConfigScreen() {
                 }
             }
 
-            // If the option belongs to an exclusive group and is being set to true, unselect others in the same group.
             if (newValue === true && option.exclusiveGroup) {
                 section.options.forEach((opt) => {
                     if (opt.exclusiveGroup === option.exclusiveGroup && opt.id !== option.id) {
@@ -130,7 +135,6 @@ export default function ItemConfigScreen() {
         setConfigState((prev) => {
             const sectionState = prev[section.id] ? { ...prev[section.id] } : {};
 
-            // If maxSelections is defined, calculate total count in this section excluding current option.
             if (section.maxSelections) {
                 const currentTotal = Object.entries(sectionState).reduce(
                     (sum, [key, value]) =>
@@ -146,7 +150,6 @@ export default function ItemConfigScreen() {
                 }
             }
 
-            // For exclusive groups in individual mode, if newCount > 0, reset others in the same group.
             if (newCount > 0 && option.exclusiveGroup) {
                 section.options.forEach((opt) => {
                     if (opt.exclusiveGroup === option.exclusiveGroup && opt.id !== option.id) {
@@ -165,9 +168,25 @@ export default function ItemConfigScreen() {
         });
     };
 
+    const handleAddToBag = () => {
+        const singlePrice = calculateSinglePrice();
+        const totalPrice = quantity * singlePrice;
+        const bagItem = {
+            id: `${item.id}-${Date.now()}`,
+            item,
+            config: configState,
+            quantity,
+            totalPrice,
+        };
+        addItem(bagItem);
+        Alert.alert('Added to Bag', `${item.title} has been added to your bag.`);
+        // Instead of navigating to the bag, navigate back to the menu
+        router.push('/menu');
+    };
+
     return (
         <View style={styles.container}>
-            <BackButtonHeader />
+            <BackButtonHeader to='/menu' />
             <Image source={item.image} style={styles.itemImage} resizeMode="cover" />
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.basePrice}>Base Price: ${item.basePrice.toFixed(2)}</Text>
@@ -229,6 +248,9 @@ export default function ItemConfigScreen() {
             <View style={styles.totalContainer}>
                 <Text style={styles.totalText}>Total Price: ${calculateTotalPrice()}</Text>
             </View>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddToBag}>
+                <Text style={styles.addButtonText}>Add to Bag</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -300,5 +322,20 @@ const styles = StyleSheet.create({
     totalText: {
         fontSize: 24,
         fontWeight: 'bold',
+    },
+    addButton: {
+        backgroundColor: '#ff6347',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 8,
+        marginVertical: 20,
+        alignItems: 'center',
+        alignSelf: 'center',
+        width: '90%',
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: '600',
     },
 });

@@ -1,10 +1,9 @@
-// pizza-shack/react/features/menu/presentation/screens/CategoryScreen.tsx
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useLocalSearchParams, Link } from 'expo-router';
 import Card from '../components/Card';
 import { categories } from '../../models/menuData';
-import BackButtonHeader from '../components/BackButtonHeader';
+import BackButtonHeader from '../../../../core/components/BackButtonHeader';
 
 export default function CategoryScreen() {
     const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
@@ -20,7 +19,7 @@ export default function CategoryScreen() {
 
     return (
         <View style={styles.container}>
-            <BackButtonHeader />
+            <BackButtonHeader to='/menu' />
             <Text style={styles.title}>{category.title}</Text>
             <Text style={styles.description}>{category.description}</Text>
             <FlatList

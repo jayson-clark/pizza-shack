@@ -1,15 +1,17 @@
-// pizza-shack/react/app/_layout.tsx
 import React from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 import { Slot } from 'expo-router';
+import { ShoppingBagProvider } from '../core/context/ShoppingBagContext';
 
 export default function RootLayout() {
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                <Slot />
-            </View>
-        </SafeAreaView>
+        <ShoppingBagProvider>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.content}>
+                    <Slot />
+                </View>
+            </SafeAreaView>
+        </ShoppingBagProvider>
     );
 }
 
