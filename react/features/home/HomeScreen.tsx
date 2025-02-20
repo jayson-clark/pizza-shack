@@ -1,52 +1,63 @@
-// pizza-shack/react/features/home/HomeScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import globalStyles from '../../core/styles/globalStyles';
+import { useShoppingBag } from '../../core/context/ShoppingBagContext';
 
 export default function HomeScreen() {
+    const router = useRouter();
+    const { bagItems } = useShoppingBag();
+    const buttonText = bagItems.length === 0 ? "Start new order" : "Continue order";
+
     return (
-        <View style={[styles.container, globalStyles.container]}>
-            <Image
-                source={require('../../assets/logo_text.png')}
-                style={styles.logo}
-                resizeMode="contain"
-            />
-            <View style={styles.statusSection}>
-                <Text style={styles.statusText}>Store is Open</Text>
-                <Text style={styles.hoursText}>Hours: 10 AM - 10 PM</Text>
+        <SafeAreaView style={[styles.safeContainer, globalStyles.container]}>
+            <View style={styles.header}>
+                <View style={{ width: 28 }} /> {/* Placeholder for symmetry on the left */}
+                <TouchableOpacity onPress={() => router.push('/account')}>
+                    <Ionicons name="person-circle-outline" size={28} color="#333" />
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.menuButton}>
-                <Link href="/menu" style={styles.menuButtonText}>
-                    View Menu
-                </Link>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.bagButton}>
-                <Link href="/bag" style={styles.bagButtonText}>
-                    View Bag
-                </Link>
-            </TouchableOpacity>
-            {/* New button for Menu Editor */}
-            <TouchableOpacity style={styles.editorButton}>
-                <Link href="/menu-editor" style={styles.editorButtonText}>
-                    Menu Editor
-                </Link>
-            </TouchableOpacity>
-        </View>
+            <View style={styles.content}>
+                <Image
+                    source={require('../../assets/logo_text.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                />
+                <View style={styles.statusSection}>
+                    <Text style={styles.statusText}>Store is Open</Text>
+                    <Text style={styles.hoursText}>Hours: 10 AM - 10 PM</Text>
+                </View>
+                <TouchableOpacity style={styles.orderButton} onPress={() => router.push('/menu')}>
+                    <Text style={styles.orderButtonText}>{buttonText}</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    safeContainer: {
         flex: 1,
-        padding: 20,
-        justifyContent: 'space-around',
-        alignItems: 'center',
         backgroundColor: '#f7f7f7',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        backgroundColor: '#fff',
+        elevation: 3,
+    },
+    content: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
     },
     logo: {
         width: '100%',
-        height: 200,
+        height: 150,
         marginBottom: 20,
     },
     statusSection: {
@@ -54,11 +65,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 15,
         borderRadius: 10,
-        elevation: 3,
+        elevation: 2,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        width: '90%',
+        width: '100%',
         marginBottom: 20,
     },
     statusText: {
@@ -71,7 +82,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#555',
     },
-    menuButton: {
+    orderButton: {
         backgroundColor: '#ff6347',
         paddingVertical: 15,
         paddingHorizontal: 30,
@@ -80,52 +91,12 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        width: '90%',
+        width: '100%',
         alignItems: 'center',
-        marginBottom: 10,
     },
-    menuButtonText: {
+    orderButtonText: {
         color: '#fff',
         fontSize: 20,
         fontWeight: '600',
-        textDecorationLine: 'none',
-    },
-    bagButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        width: '90%',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    bagButtonText: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '600',
-        textDecorationLine: 'none',
-    },
-    editorButton: {
-        backgroundColor: '#007bff',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        width: '90%',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    editorButtonText: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '600',
-        textDecorationLine: 'none',
     },
 });
