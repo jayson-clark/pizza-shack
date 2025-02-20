@@ -9,12 +9,13 @@ import {
     Alert,
     ActivityIndicator,
     ScrollView,
+    FlatList,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import BackButtonHeader from '../../core/components/BackButtonHeader';
 import { addItemToCategory, updateItemInCategory } from '../../core/services/menuService';
 import useMenuData from '../../core/hooks/useMenuData';
-import { MenuItem, ConfigSection, ConfigOption } from '../../features/menu/models/menuData';
+import { MenuItem, ConfigSection } from '../models/menuData';
 
 export default function EditItemScreen() {
     const { categoryId, itemId } = useLocalSearchParams<{ categoryId: string; itemId: string }>();
@@ -27,8 +28,7 @@ export default function EditItemScreen() {
     const [description, setDescription] = useState('');
     const [image, setImage] = useState('');
     const [basePrice, setBasePrice] = useState('');
-
-    // Use a state object for config sections.
+    // Local config sections state (we no longer edit these inline)
     const [configSections, setConfigSections] = useState<ConfigSection[]>([]);
 
     // When editing an existing item, load its data from Firestore
@@ -48,89 +48,6 @@ export default function EditItemScreen() {
         }
     }, [isNew, loading, error, categoryId, itemId, menuData]);
 
-    // ---------- Config Sections UI Helpers ----------
-    const addConfigSection = () => {
-        const newSection: ConfigSection = {
-            id: Date.now().toString(),
-            title: 'New Section',
-            pricingMode: 'flat',
-            flatPrice: 0,
-            maxSelections: 1,
-            minSelections: 0,
-            options: [],
-        };
-        setConfigSections([...configSections, newSection]);
-    };
-
-    const updateConfigSectionField = (
-        sectionId: string,
-        field: keyof ConfigSection,
-        value: any
-    ) => {
-        setConfigSections(
-            configSections.map((section) =>
-                section.id === sectionId ? { ...section, [field]: value } : section
-            )
-        );
-    };
-
-    const removeConfigSection = (sectionId: string) => {
-        setConfigSections(configSections.filter((section) => section.id !== sectionId));
-    };
-
-    const addOptionToSection = (sectionId: string) => {
-        const newOption: ConfigOption = {
-            id: Date.now().toString(),
-            label: 'New Option',
-            price: 0,
-            exclusiveGroup: '',
-            allowMultiple: false,
-        };
-        setConfigSections(
-            configSections.map((section) =>
-                section.id === sectionId
-                    ? { ...section, options: [...section.options, newOption] }
-                    : section
-            )
-        );
-    };
-
-    const updateOptionField = (
-        sectionId: string,
-        optionId: string,
-        field: keyof ConfigOption,
-        value: any
-    ) => {
-        setConfigSections(
-            configSections.map((section) => {
-                if (section.id === sectionId) {
-                    return {
-                        ...section,
-                        options: section.options.map((option) =>
-                            option.id === optionId ? { ...option, [field]: value } : option
-                        ),
-                    };
-                }
-                return section;
-            })
-        );
-    };
-
-    const removeOptionFromSection = (sectionId: string, optionId: string) => {
-        setConfigSections(
-            configSections.map((section) => {
-                if (section.id === sectionId) {
-                    return {
-                        ...section,
-                        options: section.options.filter((option) => option.id !== optionId),
-                    };
-                }
-                return section;
-            })
-        );
-    };
-
-    // ---------- Save Handler ----------
     const handleSave = async () => {
         if (!title || !description || !image || !basePrice) {
             Alert.alert('Please fill all item details.');
@@ -206,132 +123,45 @@ export default function EditItemScreen() {
             />
 
             <Text style={styles.subHeader}>Config Sections</Text>
-            {configSections.map((section) => (
-                <View key={section.id} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <TextInput
-                            style={styles.sectionTitleInput}
-                            value={section.title}
-                            onChangeText={(text) => updateConfigSectionField(section.id, 'title', text)}
-                        />
-                        <TouchableOpacity onPress={() => removeConfigSection(section.id)}>
-                            <Text style={styles.removeButtonText}>Remove Section</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Pricing Mode:</Text>
+            {configSections.length === 0 ? (
+                <Text style={styles.emptyText}>No config sections yet.</Text>
+            ) : (
+                <FlatList
+                    data={configSections}
+                    keyExtractor={(section) => section.id}
+                    renderItem={({ item: section }) => (
                         <TouchableOpacity
-                            style={[styles.modeButton, section.pricingMode === 'flat' && styles.modeButtonActive]}
-                            onPress={() => updateConfigSectionField(section.id, 'pricingMode', 'flat')}
-                        >
-                            <Text style={styles.modeButtonText}>Flat</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[
-                                styles.modeButton,
-                                section.pricingMode === 'individual' && styles.modeButtonActive,
-                            ]}
-                            onPress={() => updateConfigSectionField(section.id, 'pricingMode', 'individual')}
-                        >
-                            <Text style={styles.modeButtonText}>Individual</Text>
-                        </TouchableOpacity>
-                    </View>
-                    {section.pricingMode === 'flat' && (
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Flat Price"
-                            value={section.flatPrice?.toString()}
-                            onChangeText={(text) =>
-                                updateConfigSectionField(section.id, 'flatPrice', parseFloat(text) || 0)
+                            style={styles.sectionCard}
+                            onPress={() =>
+                                router.push(
+                                    `/menu-editor/edit-item/${categoryId}/${itemId}/edit-config-section/${section.id}`
+                                )
                             }
-                            keyboardType="numeric"
-                        />
+                        >
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
+                            <Text style={styles.sectionDetails}>
+                                Mode: {section.pricingMode} | Min: {section.minSelections ?? 0} | Max:{' '}
+                                {section.maxSelections ?? '-'}{' '}
+                                {section.pricingMode === 'flat' && section.flatPrice !== undefined
+                                    ? `| Flat Price: $${section.flatPrice.toFixed(2)}`
+                                    : ''}
+                            </Text>
+                        </TouchableOpacity>
                     )}
-                    <Text style={styles.label}>Max Selections (maximum allowed):</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Max Selections"
-                        value={section.maxSelections?.toString()}
-                        onChangeText={(text) =>
-                            updateConfigSectionField(section.id, 'maxSelections', text === '' ? 0 : parseInt(text))
-                        }
-                        keyboardType="numeric"
-                    />
-                    <Text style={styles.label}>Min Selections (required):</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Min Selections"
-                        value={section.minSelections?.toString()}
-                        onChangeText={(text) =>
-                            updateConfigSectionField(section.id, 'minSelections', text === '' ? 0 : parseInt(text))
-                        }
-                        keyboardType="numeric"
-                    />
-                    <Text style={styles.label}>Options:</Text>
-                    {section.options.map((option) => (
-                        <View key={option.id} style={styles.optionContainer}>
-                            <TextInput
-                                style={styles.optionInput}
-                                placeholder="Option Label"
-                                value={option.label}
-                                onChangeText={(text) => updateOptionField(section.id, option.id, 'label', text)}
-                            />
-                            {section.pricingMode === 'individual' && (
-                                <TextInput
-                                    style={styles.optionInput}
-                                    placeholder="Price"
-                                    value={option.price?.toString()}
-                                    onChangeText={(text) =>
-                                        updateOptionField(section.id, option.id, 'price', parseFloat(text) || 0)
-                                    }
-                                    keyboardType="numeric"
-                                />
-                            )}
-                            <TextInput
-                                style={styles.optionInput}
-                                placeholder="Exclusive Group"
-                                value={option.exclusiveGroup || ''}
-                                onChangeText={(text) =>
-                                    updateOptionField(section.id, option.id, 'exclusiveGroup', text)
-                                }
-                            />
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Allow Multiple:</Text>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.toggleButton,
-                                        option.allowMultiple && styles.toggleButtonActive,
-                                    ]}
-                                    onPress={() =>
-                                        updateOptionField(
-                                            section.id,
-                                            option.id,
-                                            'allowMultiple',
-                                            !option.allowMultiple
-                                        )
-                                    }
-                                >
-                                    <Text style={styles.toggleButtonText}>
-                                        {option.allowMultiple ? 'Yes' : 'No'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                            <TouchableOpacity onPress={() => removeOptionFromSection(section.id, option.id)}>
-                                <Text style={styles.removeButtonText}>Remove Option</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                    <TouchableOpacity
-                        style={styles.addOptionButton}
-                        onPress={() => addOptionToSection(section.id)}
-                    >
-                        <Text style={styles.addOptionButtonText}>Add Option</Text>
-                    </TouchableOpacity>
-                </View>
-            ))}
-            <TouchableOpacity style={styles.addSectionButton} onPress={addConfigSection}>
-                <Text style={styles.addSectionButtonText}>Add Config Section</Text>
+                />
+            )}
+
+            <TouchableOpacity
+                style={styles.addButton}
+                onPress={() =>
+                    router.push(
+                        `/menu-editor/edit-item/${categoryId}/${itemId}/edit-config-section/new`
+                    )
+                }
+            >
+                <Text style={styles.addButtonText}>Add New Config Section</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                 <Text style={styles.saveButtonText}>{isNew ? 'Create Item' : 'Save Item'}</Text>
             </TouchableOpacity>
@@ -343,59 +173,29 @@ const styles = StyleSheet.create({
     container: { flex: 1, padding: 10, backgroundColor: '#f2f2f2' },
     header: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginVertical: 10 },
     subHeader: { fontSize: 22, fontWeight: '600', marginVertical: 10 },
-    input: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginVertical: 8 },
-    sectionContainer: { backgroundColor: '#eaeaea', padding: 10, borderRadius: 8, marginVertical: 10 },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    sectionTitleInput: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        flex: 1,
+    input: {
         backgroundColor: '#fff',
-        padding: 8,
-        borderRadius: 4,
-    },
-    removeButtonText: { color: 'red', marginLeft: 10 },
-    row: { flexDirection: 'row', alignItems: 'center', marginVertical: 5 },
-    label: { fontSize: 16, marginVertical: 4 },
-    modeButton: { backgroundColor: '#ddd', padding: 8, borderRadius: 4, marginRight: 10 },
-    modeButtonActive: { backgroundColor: '#007bff' },
-    modeButtonText: { color: '#fff' },
-    optionContainer: {
-        backgroundColor: '#fff',
-        padding: 8,
-        borderRadius: 4,
-        marginVertical: 5,
-    },
-    optionInput: {
-        backgroundColor: '#f9f9f9',
-        padding: 8,
-        borderRadius: 4,
-        marginVertical: 4,
-    },
-    toggleButton: {
-        backgroundColor: '#ddd',
-        padding: 8,
-        borderRadius: 4,
-        marginLeft: 10,
-    },
-    toggleButtonActive: { backgroundColor: '#007bff' },
-    toggleButtonText: { color: '#fff' },
-    addOptionButton: {
-        backgroundColor: '#28a745',
-        padding: 10,
+        padding: 12,
         borderRadius: 8,
-        alignItems: 'center',
-        marginVertical: 5,
+        marginVertical: 8,
     },
-    addOptionButtonText: { color: '#fff', fontSize: 16 },
-    addSectionButton: {
+    emptyText: { textAlign: 'center', marginVertical: 10, fontSize: 16, color: '#888' },
+    sectionCard: {
+        backgroundColor: '#eaeaea',
+        padding: 12,
+        borderRadius: 8,
+        marginVertical: 6,
+    },
+    sectionTitle: { fontSize: 20, fontWeight: '600' },
+    sectionDetails: { fontSize: 16, color: '#555', marginTop: 4 },
+    addButton: {
         backgroundColor: '#17a2b8',
-        padding: 15,
+        paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
         marginVertical: 10,
     },
-    addSectionButtonText: { color: '#fff', fontSize: 18 },
+    addButtonText: { color: '#fff', fontSize: 18 },
     saveButton: {
         backgroundColor: '#007bff',
         paddingVertical: 15,
